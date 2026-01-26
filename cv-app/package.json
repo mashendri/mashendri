@@ -3,14 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://mashendri.github.io/mashendri",
+  "homepage": "https://mashendri.github.io/mashendri/cv",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "predeploy": "npm run build && rm -rf dist_temp && mkdir -p dist_temp/cv && cp -r dist/* dist_temp/cv/",
+    "deploy": "gh-pages -d dist_temp"
   },
   "dependencies": {
     "framer-motion": "^12.29.2",
