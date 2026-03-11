@@ -1,0 +1,20 @@
+# Environments
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated Data / CSV Files
+*.csv
+playstore_reviews_*.csv
+raw_reviews_*.csv
+processed_*.csv
+analisis_review_*.csv
+
+# Mac / OS Specific
+.DS_Store
