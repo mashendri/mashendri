@@ -32,28 +32,28 @@ def load_sentiment_pipeline():
     model_name = "w11wo/indonesian-roberta-base-sentiment-classifier"
     return pipeline("sentiment-analysis", model=model_name, tokenizer=model_name)
 
-st.sidebar.header("⚙️ Konfigurasi Scraping")
+st.sidebar.header("⚙️ Scraping Configuration")
 with st.sidebar.form(key='scrape_form'):
-    app_id = st.text_input("App ID (contoh: com.whatsapp)", value=st.session_state['app_id'])
-    start_year = st.number_input("Tahun Mulai", min_value=2010, max_value=2030, value=st.session_state['start_year'], step=1)
-    submit_button = st.form_submit_button(label='1. Ambil Data (Scrape) Baru')
+    app_id = st.text_input("App ID (example: com.whatsapp)", value=st.session_state['app_id'])
+    start_year = st.number_input("Start Year", min_value=2010, max_value=2030, value=st.session_state['start_year'], step=1)
+    submit_button = st.form_submit_button(label='1. Fetch New Data (Scrape)')
 
 if submit_button:
     st.session_state['app_id'] = app_id
     st.session_state['start_year'] = start_year
-    with st.spinner(f"Sedang mengambil data review untuk {app_id} sejak {start_year}..."):
+    with st.spinner(f"Fetching reviews for {app_id} since {start_year}..."):
         # Redirect stdout/stderr if needed, but for now we'll just run it
         raw_df = scrape_playstore_reviews(app_id, start_year)
         if raw_df is not None and not raw_df.empty:
             st.session_state['raw_df'] = raw_df
             st.session_state['processed_df'] = None # Reset processed data
             st.session_state['ai_correction_metrics'] = None
-            st.sidebar.success(f"Berhasil mengunduh {len(raw_df):,} review!")
+            st.sidebar.success(f"Successfully downloaded {len(raw_df):,} reviews!")
         else:
-            st.sidebar.error("Gagal mengambil data atau review tidak ditemukan.")
+            st.sidebar.error("Failed to fetch data or no reviews found.")
 
 st.sidebar.markdown("---")
-st.sidebar.header("📂 Riwayat Data")
+st.sidebar.header("📂 Data History")
 # Find all csv files that start with playstore_reviews_
 existing_files = glob.glob("playstore_reviews_*.csv")
 existing_files = [f for f in existing_files if not f.startswith("processed_")]
@@ -65,14 +65,14 @@ if existing_files:
         parts = f.replace("playstore_reviews_", "").replace(".csv", "").rsplit("_", 1)
         if len(parts) == 2:
             app_id_clean = parts[0].replace("_", ".")
-            display_name = f"{app_id_clean} (Sejak {parts[1]})"
+            display_name = f"{app_id_clean} (Since {parts[1]})"
             file_mapping[display_name] = f
         else:
             file_mapping[f] = f # fallback if weird name
             
     if file_mapping:
-        selected_file_display = st.sidebar.selectbox("Pilih Data Sebelumnya:", options=list(file_mapping.keys()))
-        if st.sidebar.button("Muat Data Terpilih 📥", use_container_width=True):
+        selected_file_display = st.sidebar.selectbox("Select Previous Data:", options=list(file_mapping.keys()))
+        if st.sidebar.button("Load Selected Data 📥", use_container_width=True):
             selected_file_path = file_mapping[selected_file_display]
             try:
                 loaded_df = pd.read_csv(selected_file_path)
@@ -89,19 +89,19 @@ if existing_files:
                     except ValueError:
                         pass
                 
-                st.sidebar.success(f"Berhasil memuat {len(loaded_df):,} review dari `{selected_file_path}`!")
+                st.sidebar.success(f"Successfully loaded {len(loaded_df):,} reviews from `{selected_file_path}`!")
             except Exception as e:
-                st.sidebar.error(f"Gagal memuat file: {e}")
+                st.sidebar.error(f"Failed to load file: {e}")
 else:
-    st.sidebar.info("Belum ada data historis yang tersimpan lokal.")
+    st.sidebar.info("No historical data saved locally yet.")
 
 # UI Logic: IF raw data exists but hasn't been processed
 if st.session_state['raw_df'] is not None and st.session_state.get('processed_df_temp') is None:
-    st.info("✅ Data mentah berhasil diambil. Silakan periksa cuplikan di bawah, lalu proses sentimennya.")
+    st.info("✅ Raw data fetched successfully. Check the preview below, then process the sentiment.")
     raw_df = st.session_state['raw_df']
     
     st.markdown("---")
-    st.write("### 📊 Ringkasan Data Scraping")
+    st.write("### 📊 Scraping Data Summary")
     
     # Calculate counts for each score
     score_counts = raw_df['score'].value_counts()
@@ -109,7 +109,7 @@ if st.session_state['raw_df'] is not None and st.session_state.get('processed_df
     # Display metrics in 6 columns
     m_cols = st.columns(6)
     with m_cols[0]:
-        st.metric("Total Review", f"{len(raw_df):,}")
+        st.metric("Total Reviews", f"{len(raw_df):,}")
     for i in range(5, 0, -1):
         with m_cols[6-i]:
             count = score_counts.get(i, 0)
@@ -117,21 +117,21 @@ if st.session_state['raw_df'] is not None and st.session_state.get('processed_df
             
     st.markdown("<br>", unsafe_allow_html=True)
     
-    st.write("### Cuplikan Data Mentah")
+    st.write("### Raw Data Preview")
     # Using st.table for natural HTML text-wrapping and perfect column width distribution
     preview_df = raw_df[['userName', 'score', 'at', 'content']].head(10).copy()
     preview_df['score'] = preview_df['score'].astype(str) + " ⭐"
     preview_df.set_index('userName', inplace=True)
     st.table(preview_df)
     
-    st.write("### Aksi")
+    st.write("### Actions")
     col_btn1, col_btn2 = st.columns(2)
     
     with col_btn1:
         # Download button for raw CSV
         csv_data = raw_df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="⬇️ Download Seluruh Data Mentah (CSV)",
+            label="⬇️ Download All Raw Data (CSV)",
             data=csv_data,
             file_name=f"raw_reviews_{st.session_state['app_id']}_{st.session_state['start_year']}.csv",
             mime='text/csv',
@@ -140,8 +140,8 @@ if st.session_state['raw_df'] is not None and st.session_state.get('processed_df
         
     with col_btn2:
         # Process button
-        if st.button("2. Proses Analisis Sentimen & NLP ▶️", type="primary", use_container_width=True):
-            with st.spinner("Menganalisis sentimen dan membersihkan teks..."):
+        if st.button("2. Process NLP & Sentiment Analysis ▶️", type="primary", use_container_width=True):
+            with st.spinner("Analyzing sentiment and cleaning text..."):
                 processed_df = preprocess_dataframe(raw_df)
                 # Parse datetime if needed
                 if not pd.api.types.is_datetime64_any_dtype(processed_df['at']):
@@ -155,22 +155,22 @@ if st.session_state['raw_df'] is not None and st.session_state.get('processed_df
 if st.session_state['processed_df'] is not None:
     df = st.session_state['processed_df']
     
-    st.markdown(f"**Aplikasi:** `{st.session_state['app_id']}` | **Tahun Filter Awal:** `{st.session_state['start_year']}`")
-    st.success("✅ Dashboard siap digunakan! Gunakan filter di sebelah kiri untuk eksplorasi spesifik.")
+    st.markdown(f"**App ID:** `{st.session_state['app_id']}` | **Start Year:** `{st.session_state['start_year']}`")
+    st.success("✅ Dashboard is ready! Use the filters on the left to explore specific data.")
     
     st.sidebar.markdown("---")
-    st.sidebar.header("🔍 Filter Dashboard")
+    st.sidebar.header("🔍 Dashboard Filters")
     
     # Sentiment Filter
     sentiment_filter = st.sidebar.multiselect(
-        "Pilih Sentimen:",
+        "Select Sentiment:",
         options=df['sentiment'].unique(),
         default=df['sentiment'].unique()
     )
     
     # Rating Filter
     score_filter = st.sidebar.slider(
-        "Pilih Rating (Bintang):",
+        "Select Rating (Stars):",
         min_value=int(df['score'].min()),
         max_value=int(df['score'].max()),
         value=(int(df['score'].min()), int(df['score'].max()))
@@ -180,7 +180,7 @@ if st.session_state['processed_df'] is not None:
     min_date = df['at'].min().date()
     max_date = df['at'].max().date()
     date_filter = st.sidebar.date_input(
-        "Rentang Waktu Ulasan:",
+        "Review Date Range:",
         value=(min_date, max_date),
         min_value=min_date,
         max_value=max_date
@@ -203,27 +203,27 @@ if st.session_state['processed_df'] is not None:
     # Metrics Row
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        st.metric("Total Review Terfilter", f"{len(filtered_df):,}")
+        st.metric("Total Filtered Reviews", f"{len(filtered_df):,}")
     with col2:
-        st.metric("Rata-rata Rating", f"{filtered_df['score'].mean():.2f} ⭐")
+        st.metric("Average Rating", f"{filtered_df['score'].mean():.2f} ⭐")
     with col3:
         positive_count = len(filtered_df[filtered_df['sentiment'] == 'Positive'])
-        st.metric("Review Positif", f"{positive_count:,}")
+        st.metric("Positive Reviews", f"{positive_count:,}")
     with col4:
         neutral_count = len(filtered_df[filtered_df['sentiment'] == 'Neutral'])
-        st.metric("Review Netral", f"{neutral_count:,}")
+        st.metric("Neutral Reviews", f"{neutral_count:,}")
     with col5:
         negative_count = len(filtered_df[filtered_df['sentiment'] == 'Negative'])
-        st.metric("Review Negatif", f"{negative_count:,}")
+        st.metric("Negative Reviews", f"{negative_count:,}")
         
     st.markdown("---")
     
     # Charts Row
-    st.subheader("Visualisasi Sentimen & Kata Kunci")
+    st.subheader("Sentiment & Keywords Visualization")
     chart_col1, chart_col2 = st.columns([1, 2])
     
     with chart_col1:
-        st.write("### Distribusi Sentimen")
+        st.write("### Sentiment Distribution")
         sentiment_counts = filtered_df['sentiment'].value_counts()
         
         fig, ax = plt.subplots(figsize=(6, 6))
@@ -236,10 +236,10 @@ if st.session_state['processed_df'] is not None:
             ax.axis('equal')
             st.pyplot(fig)
         else:
-            st.warning("Tidak ada data untuk pie chart.")
+            st.warning("No data for pie chart.")
         
     with chart_col2:
-        st.write("### Tren Sentimen Mingguan")
+        st.write("### Weekly Sentiment Trend")
         
         # Group by week (start on Monday) and sentiment
         weekly_start = filtered_df['at'] - pd.to_timedelta(filtered_df['at'].dt.dayofweek, unit='d')
@@ -258,9 +258,9 @@ if st.session_state['processed_df'] is not None:
         
     st.markdown("---")
     
-    st.subheader("Visualisasi Kata Kunci (Word Cloud)")
+    st.subheader("Word Cloud Visualization")
     # Create tabs for each sentiment full width
-    tabs = st.tabs(["🌐 Semua", "✅ Positif", "❌ Negatif", "😐 Netral"])
+    tabs = st.tabs(["🌐 All", "✅ Positive", "❌ Negative", "😐 Neutral"])
     
     sentiment_configs = [
         ("All", tabs[0], "viridis"),
@@ -289,20 +289,20 @@ if st.session_state['processed_df'] is not None:
                 ax.axis('off')
                 st.pyplot(fig)
             else:
-                st.info(f"Tidak cukup kata kunci untuk ditampilkan.")
+                st.info(f"Not enough keywords to display.")
 
     st.markdown("---")
     
     # Data Table
-    st.subheader("Detail Ulasan dan Hasil Analisis Sentimen")
+    st.subheader("Review Details & Sentiment Analysis Results")
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.write("Menampilkan cuplikan 20 ulasan terbaru berdasarkan filter di atas:")
+        st.write("Showing a preview of the latest 20 reviews based on the filters above:")
     with col2:
         csv_processed = filtered_df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="⬇️ Download Seluruh Data Terfilter",
+            label="⬇️ Download All Filtered Data",
             data=csv_processed,
             file_name=f"analisis_review_{st.session_state['app_id']}.csv",
             mime='text/csv',
@@ -312,7 +312,7 @@ if st.session_state['processed_df'] is not None:
     # Using st.table for natural text wrapping
     display_cols = ['userName', 'score', 'sentiment', 'at', 'content']
     
-    show_all = st.checkbox("Tampilkan Semua Data Terfilter", value=False)
+    show_all = st.checkbox("Show All Filtered Data", value=False)
     
     if show_all:
         preview_processed_df = filtered_df[display_cols].sort_values(by='at', ascending=False).copy()
@@ -324,19 +324,19 @@ if st.session_state['processed_df'] is not None:
     st.table(preview_processed_df)
     
     st.markdown("---")
-    st.header("🔍 Cek Anomali Lanjutan")
-    st.write("Bagian ini mendeteksi ulasan dengan **kontradiksi** antara skor bintang Play Store dengan hasil deteksi algoritma teks dasar (Leksikon).")
+    st.header("🔍 Advanced Anomaly Check")
+    st.write("This section detects reviews with **contradictions** between the Play Store star rating and the lexicon-based text detection algorithm.")
     
     if st.session_state['ai_correction_metrics'] is not None:
         metrics = st.session_state['ai_correction_metrics']
-        st.success(f"✨ **{metrics['total']}** ulasan anomali telah berhasil dianalisis ulang oleh AI (IndoBERT). Grafik di atas sudah memuat data terbaru.")
-        st.write(f"**Hasil ({metrics['target_label']}):**")
+        st.success(f"✨ **{metrics['total']}** anomalous reviews have been successfully re-analyzed by AI (IndoBERT). The charts above have been updated with the latest data.")
+        st.write(f"**Results ({metrics['target_label']}):**")
         
         # Display breakdown columns based on results
         res_cols = st.columns(len(metrics['breakdown']))
         for idx, (sent, count) in enumerate(metrics['breakdown'].items()):
             with res_cols[idx]:
-                st.metric(f"Menjadi {sent}", f"{count} review")
+                st.metric(f"Changed to {sent}", f"{count} reviews")
         st.write("---")
     
     # Create ai_verified column if it doesn't exist
@@ -353,21 +353,21 @@ if st.session_state['processed_df'] is not None:
     has_anomalies = len(false_negatives) > 0 or len(false_positives) > 0
     
     if has_anomalies:
-        st.warning(f"⚠️ Ditemukan **{len(false_negatives) + len(false_positives)}** ulasan dengan sentimen yang mencurigakan (Anomali).")
-        st.write("Alih-alih membaca dan mengubah satu per satu, Anda dapat mendelegasikan AI canggih (IndoBERT) untuk memahami konteks kalimat sisa anomali ini secara mendalam.")
+        st.warning(f"⚠️ Found **{len(false_negatives) + len(false_positives)}** reviews with suspicious sentiment (Anomalies).")
+        st.write("Instead of reading and modifying them one by one, you can delegate advanced AI (IndoBERT) to deeply understand the context of these remaining anomalous sentences.")
         
         st.write("---")
         col_anom1, col_anom2 = st.columns(2)
         
         with col_anom1:
-            st.subheader("1. Anomali Bintang Tinggi (Rating 4 & 5)")
-            st.metric("Total Data Mencurigakan (Bintang Tinggi namun teks terdeteksi Negatif)", f"{len(false_negatives)}")
+            st.subheader("1. High Star Anomalies (Rating 4 & 5)")
+            st.metric("Total Suspicious Data (High Star but Negative text)", f"{len(false_negatives)}")
             if len(false_negatives) > 0:
-                st.write("**Contoh Data (Review Terbaik):**")
+                st.write("**Data Examples (Best Reviews):**")
                 st.dataframe(false_negatives[['userName', 'score', 'content']].head(3), hide_index=True, use_container_width=True)
                 
-                if st.button("✨ Koreksi Kategori Ini dengan IndoBERT", key="btn_ai_neg"):
-                    with st.spinner("AI sedang membaca teliti konteks kalimat anomali Rating 4 & 5..."):
+                if st.button("✨ Correct This Category with IndoBERT", key="btn_ai_neg"):
+                    with st.spinner("AI is carefully reading the context of Rating 4 & 5 anomaly sentences..."):
                         nlp = load_sentiment_pipeline()
                         texts = false_negatives['content'].tolist()
                         preds = classify_sentiment_indobert(texts, nlp)
@@ -378,7 +378,7 @@ if st.session_state['processed_df'] is not None:
                         # Generate metrics
                         breakdown = pd.Series(preds).value_counts().to_dict()
                         st.session_state['ai_correction_metrics'] = {
-                            'target_label': 'Anomali Bintang Tinggi (Semula Terdeteksi Negatif)',
+                            'target_label': 'High Star Anomalies (Initially Detected as Negative)',
                             'total': len(preds),
                             'breakdown': breakdown
                         }
@@ -387,14 +387,14 @@ if st.session_state['processed_df'] is not None:
                         st.rerun()
 
         with col_anom2:
-            st.subheader("2. Anomali Bintang Rendah (Rating 1 & 2)")
-            st.metric("Total Data Mencurigakan (Bintang Rendah namun teks terdeteksi Positif)", f"{len(false_positives)}")
+            st.subheader("2. Low Star Anomalies (Rating 1 & 2)")
+            st.metric("Total Suspicious Data (Low Star but Positive text)", f"{len(false_positives)}")
             if len(false_positives) > 0:
-                st.write("**Contoh Data (Review Terburuk):**")
+                st.write("**Data Examples (Worst Reviews):**")
                 st.dataframe(false_positives[['userName', 'score', 'content']].head(3), hide_index=True, use_container_width=True)
                 
-                if st.button("✨ Koreksi Kategori Ini dengan IndoBERT", key="btn_ai_pos"):
-                    with st.spinner("AI sedang membaca teliti konteks kalimat anomali Rating 1 & 2..."):
+                if st.button("✨ Correct This Category with IndoBERT", key="btn_ai_pos"):
+                    with st.spinner("AI is carefully reading the context of Rating 1 & 2 anomaly sentences..."):
                         nlp = load_sentiment_pipeline()
                         texts = false_positives['content'].tolist()
                         preds = classify_sentiment_indobert(texts, nlp)
@@ -405,7 +405,7 @@ if st.session_state['processed_df'] is not None:
                         # Generate metrics
                         breakdown = pd.Series(preds).value_counts().to_dict()
                         st.session_state['ai_correction_metrics'] = {
-                            'target_label': 'Anomali Bintang Rendah (Semula Terdeteksi Positif)',
+                            'target_label': 'Low Star Anomalies (Initially Detected as Positive)',
                             'total': len(preds),
                             'breakdown': breakdown
                         }
@@ -414,13 +414,13 @@ if st.session_state['processed_df'] is not None:
                         st.rerun()
                         
     else:
-        st.success("Hore! Saat ini status data sudah bersih dan selaras. Tidak ada kontradiksi anomali yang terdeteksi.")
+        st.success("Yay! The data is currently clean and aligned. No anomaly contradictions detected.")
         
     # Only show final results if AI has corrected something OR if there were no anomalies to begin with
     if st.session_state['ai_correction_metrics'] is not None or not has_anomalies:
         st.markdown("---")
-        st.subheader("📈 Hasil Akhir Sentimen (Pasca Koreksi AI)")
-        st.write("Distribusi akhir dari seluruh data review setelah melalui proses penyaringan Leksikon dasar dan verifikasi mendalam oleh IndoBERT.")
+        st.subheader("📈 Final Sentiment Results (After AI Correction)")
+        st.write("Final distribution of all review data after basic Lexicon filtering and deep verification by IndoBERT.")
         
         final_sentiment_counts = df['sentiment'].value_counts()
         fig, ax = plt.subplots(figsize=(6, 6))
@@ -437,19 +437,19 @@ if st.session_state['processed_df'] is not None:
                 st.pyplot(fig)
                 
             st.write("---")
-            st.write("### 🔍 Inspeksi Hasil Akhir Sentimen")
-            st.write("Klik kategori di bawah ini untuk melihat daftar ulasannya:")
+            st.write("### 🔍 Final Sentiment Result Inspection")
+            st.write("Click the categories below to see the list of reviews:")
             
             # Create expanders for each sentiment category
             for sentiment_type in ['Positive', 'Negative', 'Neutral']:
                 sentiment_data = df[df['sentiment'] == sentiment_type]
                 if not sentiment_data.empty:
                     icon = "✅" if sentiment_type == 'Positive' else ("❌" if sentiment_type == 'Negative' else "😐")
-                    with st.expander(f"{icon} Lihat Detail Ulasan {sentiment_type} ({len(sentiment_data)} data)"):
+                    with st.expander(f"{icon} View {sentiment_type} Reviews Detail ({len(sentiment_data)} data)"):
                         display_cols = ['userName', 'score', 'at', 'content']
                         preview_df = sentiment_data[display_cols].sort_values(by='at', ascending=False).copy()
                         preview_df['score'] = preview_df['score'].astype(str) + " ⭐"
                         preview_df.set_index('userName', inplace=True)
                         st.table(preview_df)
         else:
-            st.info("Belum ada data sentimen yang cukup untuk ditampilkan.")
+            st.info("Not enough sentiment data to display.")

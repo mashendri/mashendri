@@ -122,7 +122,7 @@ def preprocess_data():
         return None
         
     latest_file = max(csv_files, key=lambda x: x.split('_')[-1]) # rudimentary way to get newest if multiple
-    print(f"Memproses file: {latest_file}")
+    print(f"Processing file: {latest_file}")
     
     df = pd.read_csv(latest_file)
     print(f"Total rows: {len(df)}")
@@ -133,10 +133,10 @@ def preprocess_data():
     output_filename = f"processed_{latest_file}"
     df.to_csv(output_filename, index=False)
     
-    print(f"Selesai! Data bersih disimpan ke: {output_filename}")
+    print(f"Done! Clean data saved to: {output_filename}")
     
     # Print brief summary
-    print("\nRingkasan Sentimen:")
+    print("\nSentiment Summary:")
     print(df['sentiment'].value_counts())
     
     return df
@@ -144,5 +144,5 @@ def preprocess_data():
 if __name__ == "__main__":
     df_processed = preprocess_data()
     if df_processed is not None:
-        print("\nPreview data bersih:")
+        print("\nClean data preview:")
         print(df_processed[['score', 'sentiment', 'clean_content', 'keywords']].head())

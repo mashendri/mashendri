@@ -8,8 +8,8 @@ def scrape_playstore_reviews(app_id, start_year=2025, lang='id', country='id'):
     """
     Scrape Google Play Store reviews for a specific app ID from a given year onwards.
     """
-    print(f"Memulai scraping review untuk App ID: {app_id}")
-    print(f"Target: Review dari tahun {start_year} ke atas...")
+    print(f"Starting review scraping for App ID: {app_id}")
+    print(f"Target: Reviews from {start_year} onwards...")
 
     all_reviews = []
     continuation_token = None
@@ -19,7 +19,7 @@ def scrape_playstore_reviews(app_id, start_year=2025, lang='id', country='id'):
     
     # We use a loop with continuation tokens to fetch reviews progressively
     # Sorting by NEWEST to easily filter by date and stop when we hit old dates
-    with tqdm(desc="Mengambil review") as pbar:
+    with tqdm(desc="Fetching reviews") as pbar:
         while True:
             # Fetch a batch of reviews
             result, continuation_token = reviews(
@@ -70,17 +70,17 @@ def scrape_playstore_reviews(app_id, start_year=2025, lang='id', country='id'):
             # Slight delay to be polite to the server
             time.sleep(1)
 
-    print(f"\nSelesai! Berhasil mengumpulkan {len(all_reviews)} review dari {start_year}.")
+    print(f"\nDone! Successfully collected {len(all_reviews)} reviews from {start_year}.")
     
     # Save to DataFrame and CSV
     if all_reviews:
         df = pd.DataFrame(all_reviews)
         filename = f"playstore_reviews_{app_id.replace('.', '_')}_{start_year}.csv"
         df.to_csv(filename, index=False)
-        print(f"Data disimpan ke: {filename}")
+        print(f"Data saved to: {filename}")
         return df
     else:
-        print("Tidak ada review yang ditemukan untuk kriteria tersebut.")
+        print("No reviews found for the given criteria.")
         return None
 
 if __name__ == "__main__":
