@@ -21,9 +21,9 @@ if 'ai_correction_metrics' not in st.session_state:
     st.session_state['ai_correction_metrics'] = None
 # Unused variables removed
 if 'app_id' not in st.session_state:
-    st.session_state['app_id'] = "com.jago.digitalBanking"
+    st.session_state['app_id'] = ""
 if 'start_year' not in st.session_state:
-    st.session_state['start_year'] = 2025
+    st.session_state['start_year'] = datetime.datetime.now().year - 1
 
 # Sidebar Configuration
 @st.cache_resource
@@ -34,7 +34,7 @@ def load_sentiment_pipeline():
 
 st.sidebar.header("⚙️ Konfigurasi Scraping")
 with st.sidebar.form(key='scrape_form'):
-    app_id = st.text_input("App ID (contoh: com.jago.digitalBanking)", value=st.session_state['app_id'])
+    app_id = st.text_input("App ID (contoh: com.whatsapp)", value=st.session_state['app_id'])
     start_year = st.number_input("Tahun Mulai", min_value=2010, max_value=2030, value=st.session_state['start_year'], step=1)
     submit_button = st.form_submit_button(label='1. Ambil Data (Scrape) Baru')
 

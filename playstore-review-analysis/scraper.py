@@ -84,9 +84,9 @@ def scrape_playstore_reviews(app_id, start_year=2025, lang='id', country='id'):
         return None
 
 if __name__ == "__main__":
-    # Target App: Bank Jago
-    TARGET_APP_ID = 'com.jago.digitalBanking'
-    START_YEAR = 2025
+    # Target App: Example (WhatsApp)
+    TARGET_APP_ID = 'com.whatsapp'
+    START_YEAR = datetime.datetime.now().year - 1
     
     df_result = scrape_playstore_reviews(TARGET_APP_ID, START_YEAR)
     

@@ -38,7 +38,7 @@ def remove_stopwords(text):
     stop_words = set(stopwords.words('indonesian'))
     
     # Add custom stopwords relevant to app reviews that don't add much meaning
-    custom_stopwords = {'aplikasi', 'app', 'jago', 'bank', 'nya', 'yg', 'di', 'ke', 'dari', 'ini', 'itu', 'dan', 'atau', 'sangat', 'sekali', 'banget', 'bgt', 'ya', 'aja'}
+    custom_stopwords = {'aplikasi', 'app', 'nya', 'yg', 'di', 'ke', 'dari', 'ini', 'itu', 'dan', 'atau', 'sangat', 'sekali', 'banget', 'bgt', 'ya', 'aja'}
     stop_words.update(custom_stopwords)
     
     words = text.split()
