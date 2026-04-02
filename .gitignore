@@ -3,3 +3,7 @@
 
 # Build output
 cv-app/dist_temp/
+# Projects
+ramadan-tracker/
+# IDE
+.vscode/
